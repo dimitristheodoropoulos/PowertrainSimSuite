@@ -1,0 +1,8 @@
+ofstream fout("results/csv/soft_mesh.csv");
+for (int i = 0; i < Th.nv; i++) {
+    real x = Th(i).x;
+    real y = Th(i).y;
+    real Bz = mur*mu0*(dx(Az)[i] + dy(Az)[i]); // simple approximation of magnetic flux
+    fout << x << "," << y << "," << Bz << "\n";
+}
+fout.close();

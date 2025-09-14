@@ -1,0 +1,22 @@
+
+---
+
+## **requirements.txt**
+
+Save this in `/home/testuser/MagneticMaterialSim/python/requirements.txt`:
+
+```text
+# Data handling
+pandas>=2.0.3
+
+# Plotting
+matplotlib>=3.8.0
+
+# Optional: JSON handling is built-in, so no extra package needed
+
+# For potential PDF/report generation (Phase 2)
+reportlab>=4.0.0
+pdfkit>=1.0.0
+
+# For numerical operations if needed in optimization.py
+numpy>=1.26.0

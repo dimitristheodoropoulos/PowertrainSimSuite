@@ -1,0 +1,54 @@
+.
+├── data
+│   ├── hard_magnetic_materials.csv
+│   ├── soft_magnetic_materials.csv
+│   ├── soft_sample.txt
+│   └── test_cases
+├── docs
+│   └── validation_reports
+├── freefem
+│   ├── models
+│   │   ├── hard_magnetic.edp
+│   │   └── soft_magnetic.edp
+│   ├── results
+│   │   └── csv
+│   └── scripts
+│       └── run_fea.sh
+├── ngspice
+│   ├── circuits
+│   │   ├── hysteresis_model.cir
+│   │   └── motor_model.cir
+│   ├── results
+│   │   └── logs
+│   │       └── *.log
+│   └── scripts
+│       └── run_ngspice.sh
+├── octave
+│   ├── scripts
+│   │   ├── core_analysis.m
+│   │   ├── motor_simulation.m
+│   │   └── visualization.m
+│   └── utils
+│       └── helpers.m
+├── project_structure.txt
+├── python
+│   ├── requirements.txt
+│   ├── results
+│   │   └── csv
+│   └── scripts
+│       ├── data_processing.py
+│       ├── fea_preprocess.py
+│       ├── optimization.py
+│       └── visualization.py
+├── README.md
+├── results
+│   ├── csv
+│   ├── logs
+│   └── plots
+├── run_all.sh
+└── tests
+    ├── test_ngspice.sh
+    ├── test_octave_core.m
+    └── test_python.py
+
+26 directories, 25 files

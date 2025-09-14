@@ -1,0 +1,47 @@
+
+---
+
+### **2️⃣ .gitignore updates**
+
+**Changes / Additions:**  
+1. Exclude **tests/ output files** if any temporary files are created.  
+2. Exclude any **Octave or FreeFEM temporary files** (`*.txt`, `*.edp~`).  
+
+**Updated `.gitignore`:**
+
+```gitignore
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# VSCode
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Results
+results/
+
+# Octave temporary files
+*.octave-history
+*.mat
+
+# FreeFEM temporary backups
+*.edp~
+*.txt~
+
+# Tests temporary files
+tests/tmp_*

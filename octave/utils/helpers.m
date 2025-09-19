@@ -1,4 +1,4 @@
-% helpers.m - common Octave functions for MagneticMaterialSim
+% helpers.m - common Octave functions for PowertrainSimSuite
 
 function mean_val = safe_mean(array)
     % Returns mean, safely handling empty arrays

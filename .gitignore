@@ -1,15 +1,4 @@
-
----
-
-### **2️⃣ .gitignore updates**
-
-**Changes / Additions:**  
-1. Exclude **tests/ output files** if any temporary files are created.  
-2. Exclude any **Octave or FreeFEM temporary files** (`*.txt`, `*.edp~`).  
-
-**Updated `.gitignore`:**
-
-```gitignore
+# ------------------------
 # Python
 __pycache__/
 *.pyc
@@ -23,7 +12,7 @@ env/
 ENV/
 
 # Jupyter Notebook checkpoints
-.ipynb_checkpoints
+.ipynb_checkpoints/
 
 # VSCode
 .vscode/
@@ -32,8 +21,9 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Results
+# Results and Phase3 outputs
 results/
+phase3_results/
 
 # Octave temporary files
 *.octave-history

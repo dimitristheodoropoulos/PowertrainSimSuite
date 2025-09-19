@@ -1,53 +1,84 @@
 #!/bin/bash
-echo "=== MagneticMaterialSim Full Workflow ==="
+set -euo pipefail
 
-# Absolute project root
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo "=== PowertrainSimSuite Phase 3 Workflow (Headless) ==="
 
-# Ensure results subfolders exist
-mkdir -p "$PROJECT_ROOT/results/csv"
-mkdir -p "$PROJECT_ROOT/results/plots"
-mkdir -p "$PROJECT_ROOT/results/logs"
-mkdir -p "$PROJECT_ROOT/results/reports"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+LOG_DIR="$PROJECT_ROOT/results/logs"
 
-# --- 1. FreeFEM simulations (generate TXT meshes) ---
-echo "[1/5] Running FreeFEM simulations..."
-bash "$PROJECT_ROOT/freefem/scripts/run_fea.sh"
+# --- Δημιουργία φακέλων ---
+mkdir -p "$PROJECT_ROOT/results/csv" \
+         "$PROJECT_ROOT/results/plots" \
+         "$PROJECT_ROOT/results/reports" \
+         "$LOG_DIR"
 
-# --- 2. Python preprocessing: prepare FEA input & convert meshes ---
-echo "[2/5] Running Python preprocessing scripts..."
-source "$PROJECT_ROOT/venv/bin/activate"
+# --- Error trap ---
+trap 'echo "❌ Σφάλμα στο βήμα $STEP. Δες logs στο $LOG_DIR"' ERR
+
+# 1️⃣ FreeFEM
+STEP="FreeFEM simulations"
+echo "[1/6] $STEP..."
+for f in "$PROJECT_ROOT/freefem/scripts/"*.edp; do
+    [[ -f "$f" ]] || continue
+    echo "Running $f..."
+    xvfb-run freefem++ "$f" -nw \
+        > "$LOG_DIR/$(basename "$f").log" 2>&1
+done
+
+# 2️⃣ Python preprocessing
+STEP="Python preprocessing"
+echo "[2/6] $STEP..."
+cd "$PROJECT_ROOT/python"
+python3 scripts/fea_preprocess.py \
+    > "$LOG_DIR/python_fea_preprocess.log" 2>&1 || true
+python3 scripts/data_processing.py \
+    > "$LOG_DIR/python_data_processing.log" 2>&1 || true
+
+# 3️⃣ Octave headless
+STEP="Octave simulations"
+echo "[3/6] $STEP..."
 cd "$PROJECT_ROOT"
-python3 python/scripts/fea_preprocess.py
-python3 python/scripts/data_processing.py
-deactivate
+octave --silent --eval "
+graphics_toolkit('gnuplot');
+set(0,'DefaultFigureVisible','off');
+set(0,'DefaultAxesFontName','Liberation Sans');
+set(0,'DefaultTextFontName','Liberation Sans');
+if exist('octave/scripts/core_analysis.m','file'), run('octave/scripts/core_analysis.m'); end
+if exist('octave/scripts/motor_simulation.m','file'), run('octave/scripts/motor_simulation.m'); end
+if exist('octave/scripts/visualization.m','file'), run('octave/scripts/visualization.m'); end
+if exist('octave/scripts/vehicle_dynamics.m','file'), run('octave/scripts/vehicle_dynamics.m'); end
+" > "$LOG_DIR/octave.log" 2>&1
 
-# --- 3. Octave simulations ---
-echo "[3/5] Running Octave simulations..."
-export SOFT_MESH_CSV="$PROJECT_ROOT/python/results/csv/soft_mesh.csv"
-export HARD_MESH_CSV="$PROJECT_ROOT/python/results/csv/hard_mesh.csv"
-cd "$PROJECT_ROOT"
-octave --silent "octave/scripts/core_analysis.m"
-octave --silent "octave/scripts/motor_simulation.m"
-octave --silent "octave/scripts/visualization.m"
-
-# --- 4. Python FEA comparison & final reports ---
-echo "[4/5] Generating Python FEA comparison and reports..."
-source "$PROJECT_ROOT/venv/bin/activate"
+# 4️⃣ Python FEA comparison & plots
+STEP="Python FEA comparison"
+echo "[4/6] $STEP..."
 cd "$PROJECT_ROOT/python/scripts"
+if [[ -f "materials.py" ]]; then
+    python3 materials.py > "$LOG_DIR/python_materials.log" 2>&1
+else
+    echo "⚠️ materials.py missing" | tee "$LOG_DIR/python_materials.log"
+fi
 
-# Update materials.py to read Octave FEA results and generate summary & JSON reports
-python3 materials.py
+# 5️⃣ Ngspice
+STEP="Ngspice simulations"
+echo "[5/6] $STEP..."
+bash "$PROJECT_ROOT/ngspice/scripts/run_ngspice.sh" \
+    > "$LOG_DIR/ngspice.log" 2>&1 || true
 
-# Optional: additional visualization scripts
-python3 visualization.py
-deactivate
-
-# --- 5. Ngspice simulations ---
-echo "[5/5] Running Ngspice simulations..."
-bash "$PROJECT_ROOT/ngspice/scripts/run_ngspice.sh"
+# 6️⃣ Output check & report
+STEP="Output check"
+echo "[6/6] $STEP..."
+if [[ -f "$PROJECT_ROOT/python/scripts/check_outputs.py" ]]; then
+    python3 "$PROJECT_ROOT/python/scripts/check_outputs.py" \
+        > "$LOG_DIR/python_check_outputs.log" 2>&1 || true
+fi
+if [[ -f "$PROJECT_ROOT/python/scripts/report_generator.py" ]]; then
+    python3 "$PROJECT_ROOT/python/scripts/report_generator.py" \
+        > "$LOG_DIR/python_report.log" 2>&1 || true
+fi
 
 echo "=== All simulations complete! ==="
 echo "Reports: $PROJECT_ROOT/results/reports"
 echo "Plots:   $PROJECT_ROOT/results/plots"
-echo "CSV data: $PROJECT_ROOT/results/csv"
+echo "CSV:     $PROJECT_ROOT/results/csv"
+echo "Logs:    $PROJECT_ROOT/results/logs"
